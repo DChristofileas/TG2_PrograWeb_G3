@@ -376,6 +376,20 @@ FastAPI, HTTPX ni Open-Meteo. Ninguna prueba automatizada realiza llamadas a
 Internet. La conexión real se comprueba manualmente levantando el backend y
 ejecutando el flujo anterior.
 
+GitHub Actions ejecuta la misma suite automáticamente en cada push a `main` y en
+cada pull request dirigido a esa rama.
+
+## Trabajo colaborativo
+
+Las instrucciones para preparar el entorno, crear ramas, escribir commits y
+abrir pull requests están en [CONTRIBUTING.md](CONTRIBUTING.md). El flujo
+recomendado consiste en trabajar en ramas pequeñas y solicitar revisión antes de
+integrar cambios en `main`.
+
+El repositorio incluye una plantilla de pull request y una validación automática
+con Python 3.12. Los archivos locales, secretos, entornos virtuales, cachés,
+configuración de editores y logs están excluidos mediante `.gitignore`.
+
 ## Frontend futuro
 
 Cuando se implemente la siguiente fase, se podrá añadir:

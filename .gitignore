@@ -1,12 +1,52 @@
+# Secretos y configuración local
 .env
+.env.*
+!.env.example
+
+# Entornos virtuales
 .venv/
+venv/
+env/
+ENV/
+
+# Python
 __pycache__/
 *.py[cod]
+*$py.class
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+.tox/
+.nox/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
+
+# Empaquetado
 *.egg-info/
+.eggs/
 dist/
 build/
-.DS_Store
 
+# Editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs y archivos temporales
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+.cache/
+test-results/
