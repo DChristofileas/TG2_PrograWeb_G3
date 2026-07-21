@@ -1,0 +1,2 @@
+"""PlanificaHoy backend package."""
+
