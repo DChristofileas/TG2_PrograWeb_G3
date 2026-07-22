@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PlanificaHoy — ¿Buen día para tu actividad?</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>PlanificaHoy</h1>
+    <p class="tagline">Revisa si el clima acompaña tu plan al aire libre.</p>
+  </header>
+
+  <main class="container">
+    <!-- Paso 1: Buscar ubicación -->
+    <section class="card" aria-labelledby="step-location">
+      <h2 id="step-location">1. Busca tu ubicación</h2>
+      <div class="search-row">
+        <label class="sr-only" for="location-input">Ubicación</label>
+        <input
+          type="text"
+          id="location-input"
+          placeholder="Ej. San José, Cartago, Madrid…"
+          autocomplete="off"
+          minlength="2"
+        />
+        <button id="search-btn" type="button">Buscar</button>
+      </div>
+      <p id="search-status" class="status" role="status" aria-live="polite"></p>
+      <ul id="candidates" class="candidates" aria-label="Resultados de ubicación"></ul>
+    </section>
+
+    <!-- Paso 2: Actividad -->
+    <section class="card is-disabled" id="activity-section" aria-labelledby="step-activity">
+      <h2 id="step-activity">2. Elige la actividad</h2>
+      <p class="selected-location" id="selected-location"></p>
+      <div class="activity-options" role="radiogroup" aria-label="Actividad">
+        <label class="activity-chip">
+          <input type="radio" name="activity" value="football" /> <span>⚽ Fútbol</span>
+        </label>
+        <label class="activity-chip">
+          <input type="radio" name="activity" value="running" /> <span>🏃 Correr</span>
+        </label>
+        <label class="activity-chip">
+          <input type="radio" name="activity" value="picnic" /> <span>🧺 Picnic</span>
+        </label>
+      </div>
+      <button id="evaluate-btn" type="button" disabled>Evaluar condiciones</button>
+      <p id="evaluate-status" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- Paso 3: Resultado -->
+    <section class="card result-card" id="result-section" hidden aria-labelledby="step-result">
+      <h2 id="step-result">3. Recomendación</h2>
+      <div class="level-banner" id="level-banner">
+        <span class="level-icon" id="level-icon" aria-hidden="true"></span>
+        <span class="level-text" id="level-text"></span>
+      </div>
+      <p class="summary" id="result-summary"></p>
+
+      <dl class="weather-grid" aria-label="Condiciones meteorológicas">
+        <div><dt>Ubicación</dt><dd id="w-location">—</dd></div>
+        <div><dt>Momento</dt><dd id="w-timestamp">—</dd></div>
+        <div><dt>Temperatura</dt><dd id="w-temp">—</dd></div>
+        <div><dt>Precipitación</dt><dd id="w-precip">—</dd></div>
+        <div><dt>Viento</dt><dd id="w-wind">—</dd></div>
+      </dl>
+
+      <h3>Motivos</h3>
+      <ul class="reasons" id="result-reasons"></ul>
+
+      <p class="disclaimer">
+        Orientativo. No es una alerta meteorológica oficial ni una recomendación médica.
+      </p>
+    </section>
+  </main>
+
+  <script src="/js/app.js" defer></script>
+</body>
+</html>

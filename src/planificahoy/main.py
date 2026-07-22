@@ -2,8 +2,11 @@
 
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 import httpx
 
 from planificahoy.adapters.open_meteo import (
@@ -52,7 +55,32 @@ def create_app(
     )
     register_exception_handlers(application)
     application.include_router(create_router(planning_service))
+    _mount_frontend(application)
     return application
+
+
+def _mount_frontend(application: FastAPI) -> None:
+    """Serve the static frontend (HTML/CSS/JS) from the same FastAPI app.
+
+    Kept additive: API routes are registered first, so /locations,
+    /recommendation, /weather and /health keep priority. Only the site's
+    static assets and the index page are added here.
+    """
+
+    frontend_dir = Path(__file__).parent / "frontend"
+    if not frontend_dir.is_dir():
+        return
+
+    application.mount(
+        "/css", StaticFiles(directory=frontend_dir / "css"), name="css"
+    )
+    application.mount(
+        "/js", StaticFiles(directory=frontend_dir / "js"), name="js"
+    )
+
+    @application.get("/", include_in_schema=False)
+    def index() -> FileResponse:
+        return FileResponse(frontend_dir / "index.html")
 
 
 app = create_app()
