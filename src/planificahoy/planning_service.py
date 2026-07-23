@@ -47,11 +47,17 @@ class PlanningService:
 
         normalized_timezone = timezone.strip()
         if not normalized_timezone or len(normalized_timezone) > 100:
-            raise InvalidInputError("La zona horaria no es valida.")
+            raise InvalidInputError(
+                "La zona horaria no es valida. Usa un identificador como "
+                "America/Costa_Rica."
+            )
         try:
             ZoneInfo(normalized_timezone)
         except (ZoneInfoNotFoundError, ValueError) as exc:
-            raise InvalidInputError("La zona horaria no es valida.") from exc
+            raise InvalidInputError(
+                "La zona horaria no es valida. Usa un identificador como "
+                "America/Costa_Rica."
+            ) from exc
 
         return self._weather_provider.get_weather(
             latitude=latitude,

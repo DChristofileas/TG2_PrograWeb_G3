@@ -9,6 +9,7 @@ class Activity(StrEnum):
     FOOTBALL = "football"
     RUNNING = "running"
     PICNIC = "picnic"
+    CYCLING = "cycling"
 
 
 class RecommendationLevel(StrEnum):

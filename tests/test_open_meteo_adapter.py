@@ -1,3 +1,5 @@
+from typing import Any
+
 import httpx
 import pytest
 
@@ -9,11 +11,45 @@ from planificahoy.config import Settings
 from planificahoy.errors import (
     ExternalResponseError,
     ExternalServiceConnectionError,
+    ExternalServiceError,
     ExternalServiceRateLimitError,
     ExternalServiceRequestError,
     ExternalServiceTimeoutError,
     ExternalServiceUnavailableError,
 )
+
+
+def weather_payload(
+    *,
+    timezone: str = "America/Costa_Rica",
+    times: list[Any] | None = None,
+    temperatures: list[Any] | None = None,
+    precipitation_probabilities: list[Any] | None = None,
+    wind_speeds: list[Any] | None = None,
+) -> dict[str, Any]:
+    return {
+        "timezone": timezone,
+        "hourly_units": {
+            "time": "iso8601",
+            "temperature_2m": "°C",
+            "precipitation_probability": "%",
+            "wind_speed_10m": "km/h",
+        },
+        "hourly": {
+            "time": times if times is not None else ["2026-07-20T18:00"],
+            "temperature_2m": (
+                temperatures if temperatures is not None else [24.2]
+            ),
+            "precipitation_probability": (
+                precipitation_probabilities
+                if precipitation_probabilities is not None
+                else [70]
+            ),
+            "wind_speed_10m": (
+                wind_speeds if wind_speeds is not None else [12.5]
+            ),
+        },
+    }
 
 
 def test_geocoder_translates_multiple_candidates() -> None:
@@ -137,12 +173,133 @@ def test_weather_provider_rejects_missing_field() -> None:
             provider.get_weather(9.93333, -84.08333, "America/Costa_Rica")
 
 
+@pytest.mark.parametrize("missing_field", ["hourly_units", "hourly"])
+def test_weather_provider_rejects_missing_top_level_weather_fields(
+    missing_field: str,
+) -> None:
+    payload = weather_payload()
+    del payload[missing_field]
+    transport = httpx.MockTransport(
+        lambda _request: httpx.Response(200, json=payload)
+    )
+
+    with httpx.Client(transport=transport) as client:
+        provider = OpenMeteoWeatherProvider(client, Settings())
+        with pytest.raises(ExternalResponseError):
+            provider.get_weather(9.93333, -84.08333, "America/Costa_Rica")
+
+
+def test_weather_provider_rejects_misaligned_hourly_series() -> None:
+    transport = httpx.MockTransport(
+        lambda _request: httpx.Response(
+            200,
+            json=weather_payload(
+                times=["2026-07-20T18:00", "2026-07-20T19:00"],
+                temperatures=[24.2],
+            ),
+        )
+    )
+
+    with httpx.Client(transport=transport) as client:
+        provider = OpenMeteoWeatherProvider(client, Settings())
+        with pytest.raises(ExternalResponseError):
+            provider.get_weather(9.93333, -84.08333, "America/Costa_Rica")
+
+
+def test_weather_provider_skips_incomplete_hour_and_uses_next_complete_hour() -> None:
+    transport = httpx.MockTransport(
+        lambda _request: httpx.Response(
+            200,
+            json=weather_payload(
+                times=["2026-07-20T18:00", "2026-07-20T19:00"],
+                temperatures=[None, 23.8],
+                precipitation_probabilities=[70, 65],
+                wind_speeds=[12.5, 10.8],
+            ),
+        )
+    )
+
+    with httpx.Client(transport=transport) as client:
+        snapshot = OpenMeteoWeatherProvider(client, Settings()).get_weather(
+            9.93333, -84.08333, "America/Costa_Rica"
+        )
+
+    assert snapshot.timestamp.isoformat() == "2026-07-20T19:00:00-06:00"
+    assert snapshot.temperature_celsius == 23.8
+
+
+def test_weather_provider_rejects_when_all_hours_are_incomplete() -> None:
+    transport = httpx.MockTransport(
+        lambda _request: httpx.Response(
+            200,
+            json=weather_payload(
+                times=["2026-07-20T18:00", "2026-07-20T19:00"],
+                temperatures=[None, 23.8],
+                precipitation_probabilities=[70, None],
+                wind_speeds=[12.5, 10.8],
+            ),
+        )
+    )
+
+    with httpx.Client(transport=transport) as client:
+        provider = OpenMeteoWeatherProvider(client, Settings())
+        with pytest.raises(ExternalResponseError):
+            provider.get_weather(9.93333, -84.08333, "America/Costa_Rica")
+
+
+@pytest.mark.parametrize("precipitation", [-0.1, 100.1])
+def test_weather_provider_rejects_precipitation_outside_range(
+    precipitation: float,
+) -> None:
+    transport = httpx.MockTransport(
+        lambda _request: httpx.Response(
+            200,
+            json=weather_payload(precipitation_probabilities=[precipitation]),
+        )
+    )
+
+    with httpx.Client(transport=transport) as client:
+        provider = OpenMeteoWeatherProvider(client, Settings())
+        with pytest.raises(ExternalResponseError):
+            provider.get_weather(9.93333, -84.08333, "America/Costa_Rica")
+
+
+def test_weather_provider_rejects_negative_wind_speed() -> None:
+    transport = httpx.MockTransport(
+        lambda _request: httpx.Response(
+            200,
+            json=weather_payload(wind_speeds=[-0.1]),
+        )
+    )
+
+    with httpx.Client(transport=transport) as client:
+        provider = OpenMeteoWeatherProvider(client, Settings())
+        with pytest.raises(ExternalResponseError):
+            provider.get_weather(9.93333, -84.08333, "America/Costa_Rica")
+
+
+def test_weather_provider_rejects_invalid_provider_timezone() -> None:
+    transport = httpx.MockTransport(
+        lambda _request: httpx.Response(
+            200,
+            json=weather_payload(timezone="not/a_timezone"),
+        )
+    )
+
+    with httpx.Client(transport=transport) as client:
+        provider = OpenMeteoWeatherProvider(client, Settings())
+        with pytest.raises(ExternalResponseError):
+            provider.get_weather(9.93333, -84.08333, "America/Costa_Rica")
+
+
 @pytest.mark.parametrize(
     ("status_code", "expected_error"),
     [
         (400, ExternalServiceRequestError),
         (429, ExternalServiceRateLimitError),
         (503, ExternalServiceUnavailableError),
+        (401, ExternalServiceError),
+        (418, ExternalServiceError),
     ],
 )
 def test_adapter_translates_http_errors(

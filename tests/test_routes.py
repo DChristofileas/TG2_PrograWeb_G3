@@ -156,7 +156,25 @@ def test_recommendation_endpoint_returns_weather_and_recommendation() -> None:
     }
 
 
-@pytest.mark.parametrize("activity", ["", "cycling"])
+def test_recommendation_endpoint_supports_cycling() -> None:
+    with build_test_client() as client:
+        response = client.get(
+            "/recommendation",
+            params={
+                "latitude": 9.93333,
+                "longitude": -84.08333,
+                "timezone": "America/Costa_Rica",
+                "activity": "cycling",
+            },
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["recommendation"]["activity"] == "cycling"
+    assert payload["recommendation"]["level"] == "UNFAVORABLE"
+
+
+@pytest.mark.parametrize("activity", ["", "skating"])
 def test_recommendation_endpoint_rejects_invalid_activity(activity: str) -> None:
     with build_test_client() as client:
         response = client.get(
@@ -170,6 +188,26 @@ def test_recommendation_endpoint_rejects_invalid_activity(activity: str) -> None
         )
 
     assert response.status_code == 422
+
+
+def test_weather_endpoint_returns_clear_invalid_timezone_message() -> None:
+    with build_test_client() as client:
+        response = client.get(
+            "/weather",
+            params={
+                "latitude": 9.93333,
+                "longitude": -84.08333,
+                "timezone": "   ",
+            },
+        )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": (
+            "La zona horaria no es valida. Usa un identificador como "
+            "America/Costa_Rica."
+        )
+    }
 
 
 def test_recommendation_endpoint_preserves_provider_error_handling() -> None:

@@ -1,4 +1,5 @@
 from datetime import datetime
+import math
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -83,6 +84,13 @@ def test_search_locations_rejects_short_query(query: str) -> None:
         service.search_locations(query)
 
 
+def test_search_locations_rejects_long_query() -> None:
+    service = build_service()
+
+    with pytest.raises(InvalidInputError):
+        service.search_locations("S" * 101)
+
+
 def test_get_weather_delegates_to_provider() -> None:
     weather_provider = FakeWeatherProvider()
     service = build_service(weather_provider)
@@ -99,9 +107,33 @@ def test_get_weather_delegates_to_provider() -> None:
     assert snapshot.wind_speed_kmh == 12.5
 
 
+def test_get_weather_normalizes_timezone() -> None:
+    weather_provider = FakeWeatherProvider()
+    service = build_service(weather_provider)
+
+    service.get_weather(9.93333, -84.08333, " America/Costa_Rica ")
+
+    assert weather_provider.received_arguments == (
+        9.93333,
+        -84.08333,
+        "America/Costa_Rica",
+    )
+
+
 @pytest.mark.parametrize(
     ("latitude", "longitude"),
-    [(91, 0), (-91, 0), (0, 181), (0, -181)],
+    [
+        (91, 0),
+        (-91, 0),
+        (0, 181),
+        (0, -181),
+        (math.nan, 0),
+        (math.inf, 0),
+        (-math.inf, 0),
+        (0, math.nan),
+        (0, math.inf),
+        (0, -math.inf),
+    ],
 )
 def test_get_weather_rejects_invalid_coordinates(
     latitude: float, longitude: float
@@ -112,11 +144,14 @@ def test_get_weather_rejects_invalid_coordinates(
         service.get_weather(latitude, longitude, "America/Costa_Rica")
 
 
-def test_get_weather_rejects_invalid_timezone() -> None:
+@pytest.mark.parametrize("timezone", ["not/a_timezone", "", "   "])
+def test_get_weather_rejects_invalid_timezone(timezone: str) -> None:
     service = build_service()
 
-    with pytest.raises(InvalidInputError):
-        service.get_weather(9.93333, -84.08333, "not/a_timezone")
+    with pytest.raises(InvalidInputError) as exc_info:
+        service.get_weather(9.93333, -84.08333, timezone)
+
+    assert "America/Costa_Rica" in str(exc_info.value)
 
 
 def test_get_recommendation_reuses_one_weather_snapshot() -> None:
@@ -136,6 +171,20 @@ def test_get_recommendation_reuses_one_weather_snapshot() -> None:
     assert result.recommendation.level is RecommendationLevel.REGULAR
 
 
+def test_get_recommendation_supports_cycling() -> None:
+    service = build_service()
+
+    result = service.get_recommendation(
+        latitude=9.93333,
+        longitude=-84.08333,
+        timezone="America/Costa_Rica",
+        activity=Activity.CYCLING,
+    )
+
+    assert result.recommendation.activity is Activity.CYCLING
+    assert result.recommendation.level is RecommendationLevel.UNFAVORABLE
+
+
 def test_get_recommendation_rejects_activity_before_weather_call() -> None:
     weather_provider = FakeWeatherProvider()
     service = build_service(weather_provider)
@@ -145,7 +194,7 @@ def test_get_recommendation_rejects_activity_before_weather_call() -> None:
             9.93333,
             -84.08333,
             "America/Costa_Rica",
-            "cycling",
+            "skating",
         )
 
     assert weather_provider.call_count == 0

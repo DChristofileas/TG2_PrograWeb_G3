@@ -79,7 +79,7 @@ async function searchLocations() {
 
   state.searching = true;
   els.searchBtn.disabled = true;
-  els.candidates.innerHTML = "";
+  els.candidates.replaceChildren();
   setStatus(els.searchStatus, "Buscando ubicaciones…");
 
   try {
@@ -104,15 +104,20 @@ async function searchLocations() {
 }
 
 function renderCandidates(candidates) {
-  els.candidates.innerHTML = "";
+  els.candidates.replaceChildren();
   candidates.forEach((c) => {
     const li = document.createElement("li");
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "candidate-btn";
-    btn.innerHTML =
-      `<strong>${c.name}</strong>` +
-      `<small>${c.admin_region ? c.admin_region + ", " : ""}${c.country} · ${c.timezone}</small>`;
+
+    const name = document.createElement("strong");
+    name.textContent = c.name;
+
+    const details = document.createElement("small");
+    details.textContent = `${c.admin_region ? c.admin_region + ", " : ""}${c.country} · ${c.timezone}`;
+
+    btn.append(name, details);
     btn.addEventListener("click", () => selectCandidate(c, btn));
     li.appendChild(btn);
     els.candidates.appendChild(li);
@@ -191,7 +196,7 @@ function renderResult(data) {
   els.wPrecip.textContent = `${weather.precipitation_probability_percent} %`;
   els.wWind.textContent = `${weather.wind_speed_kmh} km/h`;
 
-  els.resultReasons.innerHTML = "";
+  els.resultReasons.replaceChildren();
   (recommendation.reasons || []).forEach((reason) => {
     const li = document.createElement("li");
     li.textContent = reason;

@@ -82,6 +82,16 @@ ACTIVITY_RULES: Mapping[Activity, ActivityThresholds] = MappingProxyType(
             wind_warning_from=20,
             wind_unfavorable_from=35,
         ),
+        Activity.CYCLING: ActivityThresholds(
+            temperature_minimum=5,
+            temperature_favorable_minimum=10,
+            temperature_favorable_maximum=26,
+            temperature_maximum=32,
+            precipitation_warning_from=30,
+            precipitation_unfavorable_from=65,
+            wind_warning_from=20,
+            wind_unfavorable_from=35,
+        ),
     }
 )
 

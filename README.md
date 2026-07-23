@@ -10,10 +10,10 @@ Open-Meteo y generar una recomendación orientativa para una actividad.
 - Geocodificación de texto mediante Open-Meteo Geocoding API.
 - Consulta horaria mediante Open-Meteo Forecast API.
 - Conversión del JSON externo a modelos internos estables.
-- Recomendaciones para `football`, `running` y `picnic` mediante reglas internas.
-- Respuestas JSON propias para un futuro frontend HTML, CSS y JavaScript.
+- Recomendaciones para `football`, `running`, `picnic` y `cycling` mediante reglas internas.
+- Frontend HTML, CSS y JavaScript servido desde la misma aplicación FastAPI.
 - Pruebas unitarias y de endpoints sin conexión a Internet.
-- Sin frontend final y sin base de datos.
+- Sin base de datos.
 
 FastAPI se utiliza porque ofrece validación de parámetros, serialización JSON,
 documentación OpenAPI automática y un cliente de pruebas sencillo, sin exigir
@@ -22,7 +22,7 @@ una arquitectura pesada.
 ## Arquitectura
 
 ```text
-Frontend futuro (HTML/CSS/JavaScript)
+Frontend HTML/CSS/JavaScript
                  |
                  | fetch() a nuestro backend
                  v
@@ -106,7 +106,8 @@ recomendación determinista. Las actividades disponibles son:
 
 - `football`;
 - `running`;
-- `picnic`.
+- `picnic`;
+- `cycling`.
 
 Cada actividad utiliza exactamente las mismas variables:
 
@@ -136,6 +137,9 @@ desfavorables, una advertencia domina las condiciones favorables.
 | Picnic | Temperatura | `15 ≤ T ≤ 28 °C` | `10 ≤ T < 15` o `28 < T ≤ 32 °C` | `T < 10` o `T > 32 °C` |
 | Picnic | Precipitación | `P < 25 %` | `25 ≤ P < 55 %` | `P ≥ 55 %` |
 | Picnic | Viento | `V < 20 km/h` | `20 ≤ V < 35 km/h` | `V ≥ 35 km/h` |
+| Cycling | Temperatura | `10 ≤ T ≤ 26 °C` | `5 ≤ T < 10` o `26 < T ≤ 32 °C` | `T < 5` o `T > 32 °C` |
+| Cycling | Precipitación | `P < 30 %` | `30 ≤ P < 65 %` | `P ≥ 65 %` |
+| Cycling | Viento | `V < 20 km/h` | `20 ≤ V < 35 km/h` | `V ≥ 35 km/h` |
 
 Los umbrales están definidos en una única tabla inmutable dentro de
 `recommendation_service.py`. Agregar otra actividad con el mismo algoritmo
@@ -192,7 +196,7 @@ la hora de la consulta.
 ### `GET /recommendation`
 
 Parámetros obligatorios: `latitude`, `longitude`, `timezone` y `activity`. La
-actividad debe ser `football`, `running` o `picnic`.
+actividad debe ser `football`, `running`, `picnic` o `cycling`.
 
 ```json
 {
@@ -376,6 +380,10 @@ FastAPI, HTTPX ni Open-Meteo. Ninguna prueba automatizada realiza llamadas a
 Internet. La conexión real se comprueba manualmente levantando el backend y
 ejecutando el flujo anterior.
 
+La suite incluye casos límite de coordenadas, zonas horarias, actividades,
+respuestas incompletas del proveedor, valores meteorológicos fuera de rango y
+errores HTTP externos poco comunes.
+
 GitHub Actions ejecuta la misma suite automáticamente en cada push a `main` y en
 cada pull request dirigido a esa rama.
 
@@ -390,15 +398,15 @@ El repositorio incluye una plantilla de pull request y una validación automáti
 con Python 3.12. Los archivos locales, secretos, entornos virtuales, cachés,
 configuración de editores y logs están excluidos mediante `.gitignore`.
 
-## Frontend futuro
+## Frontend
 
-Cuando se implemente la siguiente fase, se podrá añadir:
+El frontend estático se sirve desde la misma aplicación FastAPI:
 
 ```text
-frontend/
+src/planificahoy/frontend/
 ├── index.html
-├── styles.css
-└── app.js
+├── css/styles.css
+└── js/app.js
 ```
 
 `app.js` consumirá exclusivamente `/locations`, `/weather` y `/recommendation`
@@ -407,7 +415,6 @@ del backend.
 ## Fuera de alcance deliberadamente
 
 - selección de una hora por el usuario;
-- interfaz visual final;
 - traducción o personalización avanzada de mensajes;
 - algoritmos distintos por actividad mediante Strategy;
 - autenticación de usuarios;

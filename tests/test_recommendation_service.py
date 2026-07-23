@@ -38,6 +38,7 @@ def make_snapshot(
         (Activity.FOOTBALL, 20, 20, 10),
         (Activity.RUNNING, 16, 20, 10),
         (Activity.PICNIC, 22, 10, 10),
+        (Activity.CYCLING, 18, 20, 10),
     ],
 )
 def test_each_activity_can_be_favorable(
@@ -189,10 +190,19 @@ def test_any_unfavorable_condition_dominates_warnings() -> None:
     assert len(result.reasons) == 3
 
 
+def test_activity_parser_accepts_case_and_extra_spaces() -> None:
+    result = RecommendationService().evaluate(
+        make_snapshot(18, 20, 10), " CYCLING "
+    )
+
+    assert result.activity is Activity.CYCLING
+    assert result.level is RecommendationLevel.FAVORABLE
+
+
 def test_unknown_activity_is_rejected() -> None:
     with pytest.raises(UnsupportedActivityError):
         RecommendationService().evaluate(
-            make_snapshot(20, 0, 0), "cycling"
+            make_snapshot(20, 0, 0), "skating"
         )
 
 
