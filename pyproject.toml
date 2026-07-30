@@ -23,7 +23,7 @@ dev = [
 where = ["src"]
 
 [tool.vercel]
-entrypoint = "planificahoy.main:app"
+entrypoint = "src.app:app"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
