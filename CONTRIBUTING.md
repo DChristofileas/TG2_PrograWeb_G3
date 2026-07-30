@@ -20,7 +20,10 @@ En Windows PowerShell, la activación del entorno es:
 .venv\Scripts\Activate.ps1
 ```
 
-## Flujo recomendado
+## Flujo obligatorio
+
+`main` no es una rama de trabajo: todos los cambios deben llegar mediante un
+pull request desde una rama creada a partir de `main` actualizado.
 
 1. Actualizar `main` antes de comenzar:
 
@@ -29,7 +32,7 @@ En Windows PowerShell, la activación del entorno es:
    git pull --ff-only origin main
    ```
 
-2. Crear una rama con un nombre descriptivo:
+2. Crear una rama propia con un nombre descriptivo:
 
    ```bash
    git switch -c feature/nombre-corto
@@ -37,13 +40,18 @@ En Windows PowerShell, la activación del entorno es:
 
    Se recomiendan los prefijos `feature/`, `fix/`, `test/`, `docs/` y `chore/`.
 
-3. Mantener los cambios enfocados y ejecutar todas las pruebas:
+3. Trabajar únicamente en esa rama y mantener los cambios enfocados.
+
+4. Ejecutar todas las pruebas antes de publicar:
 
    ```bash
    python -m pytest
    ```
 
-4. Crear commits claros, por ejemplo:
+5. Crear commits claros y publicar la rama con `git push -u origin
+   nombre-de-rama`.
+
+   Ejemplos de mensajes:
 
    ```text
    feat: add activity selection
@@ -53,7 +61,37 @@ En Windows PowerShell, la activación del entorno es:
    chore: update repository configuration
    ```
 
-5. Publicar la rama y abrir un pull request hacia `main`.
+6. Abrir un pull request hacia `main`.
+7. Esperar a que GitHub Actions complete el check requerido `pytest`.
+8. Abrir y revisar el Vercel Preview generado para el pull request. Las
+   Preview protegidas requieren iniciar sesión con una cuenta que tenga acceso
+   al proyecto Vercel; si un integrante no tiene acceso, debe solicitarlo a la
+   persona propietaria del proyecto o pedirle un Shareable Link del deployment.
+9. Solicitar revisión a otro integrante cuando el alcance o riesgo del cambio
+   lo amerite. La aprobación es recomendada, pero no obligatoria.
+10. Integrar solamente cuando la rama esté actualizada y el check requerido
+    `pytest` esté verde.
+
+Las ramas previstas para el trabajo de producción son:
+
+- `feature/frontend-production`
+- `feature/production-qa`
+- `feature/secops-docs`
+
+Cada integrante debe crear su propia rama desde `main` actualizado cuando
+reciba sus instrucciones; estas ramas no se crean por adelantado. Persona 1
+creará ramas específicas únicamente cuando necesite realizar cambios concretos.
+
+## Contratos estables
+
+Se consideran estables los endpoints `/locations`, `/weather` y
+`/recommendation`, junto con sus parámetros y modelos de respuesta consumidos
+por el frontend. También se mantiene la dirección arquitectónica
+Open-Meteo → adaptadores → servicios → FastAPI.
+
+Cualquier cambio incompatible debe coordinarse con Persona 1 antes de
+implementarse y debe actualizar en el mismo trabajo todos sus consumidores,
+pruebas y documentación.
 
 ## Reglas básicas
 
@@ -62,11 +100,12 @@ En Windows PowerShell, la activación del entorno es:
 - No llamar Open-Meteo directamente desde el frontend.
 - Mantener FastAPI, reglas internas y adaptadores en sus responsabilidades
   actuales.
-- No cambiar endpoints, contratos o arquitectura sin coordinarlo con el equipo.
+- No cambiar endpoints, contratos o arquitectura fuera del proceso de
+  coordinación descrito en esta guía.
 - Toda nueva funcionalidad debe incluir pruebas y documentación proporcional.
 
 ## Pull requests
 
-El pull request debe explicar qué cambia, por qué cambia y cómo se verificó. Al
-menos otro integrante debería revisarlo antes de integrarlo cuando la dinámica
-del curso lo permita.
+El pull request debe explicar qué cambia, por qué cambia y cómo se verificó.
+Cada integrante puede integrar su propio pull request cuando `pytest` esté
+verde; para cambios amplios o sensibles se recomienda solicitar revisión.
