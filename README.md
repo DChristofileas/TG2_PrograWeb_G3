@@ -344,6 +344,34 @@ python -m pip install -e ".[dev]"
 uvicorn planificahoy.main:app --app-dir src --reload
 ```
 
+## Compatibilidad preparada para Vercel
+
+Vercel utiliza la instancia FastAPI existente mediante el entrypoint
+personalizado declarado en `pyproject.toml`:
+
+```toml
+[tool.vercel]
+entrypoint = "planificahoy.main:app"
+```
+
+Esta estrategia conserva una sola instancia `app` y no duplica rutas ni lógica.
+El paquete `planificahoy` se descubre desde el layout `src/` mediante la
+configuración de setuptools y se valida también desde una instalación aislada
+del proyecto. `.python-version` fija Python 3.12, compatible con
+`requires-python = ">=3.11"` y con la versión usada en GitHub Actions.
+
+El frontend permanece en `src/planificahoy/frontend/` y FastAPI sigue sirviendo
+`/`, `/css` y `/js` en el mismo origen. En esta fase no se añade CORS ni se
+mueven los recursos a `public/`; ese comportamiento se comprobará primero en un
+Vercel Preview Deployment.
+
+Para crear un entorno reproducible con el lockfile:
+
+```bash
+uv sync --locked --all-extras
+uv run python -m pytest
+```
+
 Comprobaciones manuales:
 
 ```bash
