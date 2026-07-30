@@ -22,6 +22,13 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+planificahoy = [
+    "frontend/*.html",
+    "frontend/css/*.css",
+    "frontend/js/*.js",
+]
+
 [tool.vercel]
 entrypoint = "src.app:app"
 
