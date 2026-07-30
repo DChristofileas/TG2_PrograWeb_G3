@@ -50,3 +50,6 @@ Thumbs.db
 *.orig
 .cache/
 test-results/
+
+# Vercel
+.vercel/
