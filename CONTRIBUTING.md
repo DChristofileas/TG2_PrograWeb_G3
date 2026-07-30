@@ -67,10 +67,10 @@ pull request desde una rama creada a partir de `main` actualizado.
    Preview protegidas requieren iniciar sesión con una cuenta que tenga acceso
    al proyecto Vercel; si un integrante no tiene acceso, debe solicitarlo a la
    persona propietaria del proyecto o pedirle un Shareable Link del deployment.
-9. Solicitar y obtener al menos una aprobación de otro integrante, y resolver
-   todas las conversaciones del pull request.
-10. Integrar solamente cuando la rama esté actualizada y todos los checks estén
-    verdes.
+9. Solicitar revisión a otro integrante cuando el alcance o riesgo del cambio
+   lo amerite. La aprobación es recomendada, pero no obligatoria.
+10. Integrar solamente cuando la rama esté actualizada y el check requerido
+    `pytest` esté verde.
 
 Las ramas previstas para el trabajo de producción son:
 
@@ -107,4 +107,5 @@ pruebas y documentación.
 ## Pull requests
 
 El pull request debe explicar qué cambia, por qué cambia y cómo se verificó.
-Debe contar con al menos una aprobación antes de integrarse.
+Cada integrante puede integrar su propio pull request cuando `pytest` esté
+verde; para cambios amplios o sensibles se recomienda solicitar revisión.
