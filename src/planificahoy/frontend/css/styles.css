@@ -194,6 +194,17 @@ button:disabled { background: #a9bad6; cursor: not-allowed; }
   font-size: 0.85rem;
 }
 
+.site-footer {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.site-footer p { margin: 0; }
+.site-footer a { color: var(--brand-ink); }
+
 @media (max-width: 480px) {
   .search-row { flex-direction: column; }
   .site-header h1 { font-size: 1.6rem; }
