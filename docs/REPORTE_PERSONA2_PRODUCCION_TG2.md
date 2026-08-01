@@ -1,6 +1,6 @@
 # Reporte Persona 2 — Frontend de producción (Trabajo Grupal #2)
 
-**Rama:** `feature/frontend-production`
+**Rama:** `feature/frontend-production` (PR #5, fusionado en `main`)
 **Archivos modificados:** `src/planificahoy/frontend/index.html`, `src/planificahoy/frontend/css/styles.css`
 **Archivos sin cambios:** `src/planificahoy/frontend/js/app.js` (ya cumplía los criterios de producción)
 
@@ -58,20 +58,23 @@ Se agregó un `<footer>` siempre visible con el enlace requerido por la licencia
 - No se agregaron dependencias, secretos ni variables.
 
 ## 5. Tests
-- Suite completa local tras los cambios: **106 passed** (misma cifra que `main`).
+- Suite completa tras los cambios: **106 passed** (misma cifra que `main`).
+- Check obligatorio `pytest` en verde en el PR #5 (CI con Python 3.12 + `uv.lock`).
 - Los cambios son aditivos en HTML/CSS; `app.js` y contratos intactos.
 
-## 6. Pruebas manuales (Preview)
-_Completar tras abrir el PR:_
+## 6. Pruebas manuales (Production)
 
-- [ ] Búsqueda "San José" → candidatos → selección → actividad → recomendación
-- [ ] Error controlado: búsqueda de 1 carácter y término inexistente
-- [ ] Footer con atribución visible en desktop y móvil (DevTools, Ctrl+Shift+M)
-- [ ] Favicon visible en la pestaña; consola sin 404 de `/favicon.ico` ni errores
-- [ ] Sin scroll horizontal en 360px de ancho
-- [ ] Navegación por teclado: Tab por input, botón, candidatos, chips, enlace del footer
+El PR #5 se fusionó con 3 checks en verde (incluido `pytest`) y el QA manual se
+realizó directamente sobre Production tras el despliegue automático:
 
-**URL Preview:** _(pegar aquí)_
+- [x] Búsqueda "San José" → candidatos → selección → actividad → recomendación
+- [x] Error controlado: búsqueda de 1 carácter y término inexistente muestran mensajes amigables
+- [x] Footer con atribución Open-Meteo visible en desktop y móvil (DevTools, Ctrl+Shift+M)
+- [x] Favicon visible en la pestaña; consola sin 404 de `/favicon.ico` ni errores
+- [x] Sin scroll horizontal en 360px de ancho
+- [x] Navegación por teclado: Tab por input, botón, candidatos, chips y enlace del footer
+
+**Validado en:** Production `https://planificahoy.vercel.app/` (PR #5, commit `d5ab39b`, merge `3ac69f3`, 3 checks ✅, deploy Vercel "Ready")
 
 ## 7. Riesgos y cambios que afectan a otros
 - **Persona 4:** debe documentar la atribución Open-Meteo en el README (coordinación prevista en su rol). Este PR no toca README ni `docs/` compartidos, solo agrega este reporte.
