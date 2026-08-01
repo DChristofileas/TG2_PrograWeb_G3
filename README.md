@@ -351,10 +351,11 @@ personalizado declarado en `pyproject.toml`:
 
 ```toml
 [tool.vercel]
-entrypoint = "planificahoy.main:app"
+entrypoint = "src.app:app"
 ```
 
-Esta estrategia conserva una sola instancia `app` y no duplica rutas ni lógica.
+`src/app.py` reexporta `planificahoy.main:app`. Esta estrategia conserva una
+sola instancia `app` y no duplica rutas ni lógica.
 El paquete `planificahoy` se descubre desde el layout `src/` mediante la
 configuración de setuptools y se valida también desde una instalación aislada
 del proyecto. `.python-version` fija Python 3.12, compatible con
@@ -413,7 +414,9 @@ respuestas incompletas del proveedor, valores meteorológicos fuera de rango y
 errores HTTP externos poco comunes.
 
 GitHub Actions ejecuta la misma suite automáticamente en cada push a `main` y en
-cada pull request dirigido a esa rama.
+cada pull request dirigido a esa rama. El job obligatorio se llama `pytest` y
+usa `uv sync --locked --all-extras` para instalar exactamente lo resuelto en
+`uv.lock` antes de ejecutar `uv run python -m pytest`.
 
 ## Trabajo colaborativo
 
