@@ -53,6 +53,21 @@ def create_app(
         ),
         lifespan=lifespan,
     )
+
+    @application.middleware("http")
+    async def add_security_headers(request, call_next):
+        """Apply baseline browser protections without restricting FastAPI docs."""
+
+        response = await call_next(request)
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault(
+            "Referrer-Policy", "strict-origin-when-cross-origin"
+        )
+        response.headers.setdefault(
+            "Permissions-Policy", "camera=(), geolocation=(), microphone=()"
+        )
+        return response
+
     register_exception_handlers(application)
     application.include_router(create_router(planning_service))
     _mount_frontend(application)
