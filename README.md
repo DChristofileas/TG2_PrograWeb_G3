@@ -373,6 +373,71 @@ uv sync --locked --all-extras
 uv run python -m pytest
 ```
 
+## Producción, DevOps y SecOps
+
+La versión pública se despliega en
+[https://planificahoy.vercel.app/](https://planificahoy.vercel.app/). La rama
+de producción es `main`; no se trabaja directamente sobre ella. El flujo del
+equipo es `feature branch` → Pull Request → check obligatorio `pytest` → Vercel
+Preview → merge → Production. GitHub Actions usa Python 3.12 y `uv.lock` para
+instalar dependencias reproducibles con `uv sync --locked --all-extras`.
+
+Las Preview Deployments se revisan antes del merge. Si una Preview solicita
+Vercel SSO, se requiere una sesión con acceso al proyecto o un Shareable Link
+proporcionado por la persona propietaria. La protección de `main` requiere PR y
+el check `pytest`; fuerza push y borrado están bloqueados. La aprobación y la
+resolución de conversaciones son recomendadas, pero no requisitos de bloqueo.
+
+### Controles SecOps
+
+- No hay secretos, usuarios, autenticación ni tokens en este MVP. Open-Meteo
+  utiliza endpoints públicos sin API key; `.env` y variantes locales están
+  ignorados y `.env.example` contiene únicamente las variables reales
+  `PLANIFICAHOY_*`.
+- La aplicación valida los parámetros HTTP con FastAPI y valida las respuestas
+  de Open-Meteo antes de convertirlas a modelos internos. Los errores no
+  exponen tracebacks, rutas locales ni cuerpos del proveedor.
+- Las respuestas incluyen `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: strict-origin-when-cross-origin` y una
+  `Permissions-Policy` que deshabilita cámara, geolocalización y micrófono.
+- El frontend y backend usan el mismo origen; por ello no se habilita CORS.
+  El JavaScript escribe datos remotos con `textContent`, no con HTML inyectado.
+- No se aplica una CSP en esta fase: Swagger UI (`/docs`) usa recursos y script
+  inline que exigirían una política con nonces/hashes. Los headers de menor
+  riesgo se prueban en frontend, CSS, JavaScript y `/docs`; una CSP se añadirá
+  únicamente con pruebas específicas que mantengan Swagger funcional.
+
+`/docs` y `/openapi.json` se mantienen públicos por su utilidad académica y
+para facilitar la verificación de los contratos. No incluyen credenciales ni
+datos privados.
+
+### Supabase no aplicable
+
+Supabase no se utiliza deliberadamente. El MVP no tiene cuentas, autenticación,
+datos persistentes, historial ni preferencias de usuario; añadir una base de
+datos o credenciales aumentaría el alcance y la superficie de seguridad sin
+resolver una necesidad del producto.
+
+### Rollback básico
+
+Si un despliegue causa una regresión, se identifica el commit estable anterior,
+se revierte mediante un Pull Request hacia `main`, se confirma `pytest` y la
+Preview, y se integra el revert. Vercel vuelve a desplegar automáticamente el
+estado de `main`; además conserva despliegues anteriores para inspección y
+recuperación según los permisos del proyecto.
+
+### Responsabilidades del equipo
+
+| Rol | Responsabilidad en TG2 |
+|---|---|
+| Persona 1 | Integración del trabajo del equipo y coordinación de contratos estables. |
+| Persona 2 | Frontend de producción, accesibilidad y atribución visible de Open-Meteo. |
+| Persona 3 | Robustecimiento, QA y comprobaciones de producción. |
+| Persona 4 | SecOps, documentación, evidencias y checklist de entrega. |
+
+Los nombres de integrantes se mantienen en la entrega institucional del grupo;
+esta tabla evita atribuir un nombre incorrecto a un rol en el repositorio.
+
 Comprobaciones manuales:
 
 ```bash

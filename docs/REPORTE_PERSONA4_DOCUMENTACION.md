@@ -1,63 +1,73 @@
-# Reporte Persona 4 — Documentación, GitHub y Entregable Final
+# Reporte Persona 4 — SecOps, documentación y evidencia
 
-## Resumen Ejecutivo
-Como Persona 4, la responsabilidad principal ha sido consolidar, verificar, documentar y preparar la entrega final del proyecto **PlanificaHoy** para la materia *Programación Web para Ciencia de Datos*.
+## Alcance completado
 
-Este trabajo asegura la reproducibilidad, la coherencia arquitectónica, la correcta explicación del uso de patrones de diseño y principios SOLID, y el cumplimiento estricto de las especificaciones requeridas para la evaluación académica.
+Se auditó la configuración, la integración externa, el frontend, FastAPI, las
+pruebas y la documentación del repositorio. Este reporte solo registra
+evidencia verificable desde el código y la configuración versionada; no afirma
+capturas, accesos a Vercel ni ejecuciones que no estén adjuntas al PR.
 
----
+## Auditoría de secretos y variables
 
-## 1. Auditoría y Limpieza del Repositorio
+- No se versionan `.env` reales: `.gitignore` ignora `.env` y `.env.*`, excepto
+  `.env.example`.
+- `.env.example` documenta únicamente `PLANIFICAHOY_GEOCODING_BASE_URL`,
+  `PLANIFICAHOY_FORECAST_BASE_URL`, `PLANIFICAHOY_HTTP_TIMEOUT_SECONDS`,
+  `PLANIFICAHOY_MAX_LOCATION_CANDIDATES`, `PLANIFICAHOY_TEMPERATURE_UNIT` y
+  `PLANIFICAHOY_WIND_SPEED_UNIT`.
+- Open-Meteo no requiere API key en esta aplicación. No existe
+  `OPEN_METEO_API_KEY`, token, contraseña o credencial ficticia.
+- El frontend llama solo a rutas relativas del backend, por lo que no recibe
+  configuración privada ni credenciales.
 
-- **Secretos y Seguridad**: Se verificó la total ausencia de claves privadas, tokens, API Keys o variables `.env` reales hardcodeadas. El archivo `.env.example` se mantiene limpio y documentado como plantilla orientativa.
-- **Archivos Temporales e Ignorados**: `.gitignore` fue auditado para asegurar la correcta exclusión de entornos virtuales (`.venv`, `venv`), carpetas de caché de Python (`__pycache__`, `.pytest_cache`), artefactos de build y archivos de sistema (`.DS_Store`).
-- **Navegabilidad y Estructura**: La estructura de carpetas se mantiene uniforme, limpia y modular.
+## SecOps aplicado
 
----
+- Validación de entradas con FastAPI y validación de las respuestas externas
+  antes de formar los modelos internos.
+- Traducción de errores externos a 502, 503 o 504 sin devolver tracebacks,
+  paths locales ni cuerpos del proveedor.
+- Headers añadidos a las respuestas: `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: strict-origin-when-cross-origin` y `Permissions-Policy`
+  para deshabilitar cámara, geolocalización y micrófono.
+- El mismo origen evita CORS innecesario. El frontend renderiza datos con
+  `textContent`, mitigando inyección HTML en los valores recibidos.
+- CSP se difiere de forma deliberada: `/docs` usa Swagger UI con scripts inline.
+  Una política útil exige nonces o hashes y validación completa; no se agrega
+  una CSP débil o que rompa la documentación académica.
 
-## 2. Documentación del Producto y Arquitectura
+## API pública y documentación
 
-Se ha estructurado y complementado el archivo `README.md` con las siguientes secciones clave:
+`/docs` y `/openapi.json` permanecen públicos. Son útiles para evaluación y
+consumo de la API, y no exponen secretos. La atribución a Open-Meteo está
+visible en el footer del frontend y documentada en el README.
 
-1. **Visión del Producto**: Explicación del problema, usuario objetivo, MVP y actividades soportadas (`football`, `running`, `picnic`).
-2. **API Externa y Datos**: Detalle de las APIs de Open-Meteo (Geocoding API y Forecast API), mapeo de campos externos (`temperature_2m`, `precipitation_probability`, `wind_speed_10m`) a modelos de dominio internos (`temperature_celsius`, `precipitation_probability_percent`, `wind_speed_kmh`).
-3. **Arquitectura Interna y Patrones**:
-   - **Ports and Adapters**: Aislamiento del dominio mediante interfaces abstractas (`Geocoder`, `WeatherProvider`).
-   - **Adapter Pattern**: `OpenMeteoGeocoder` y `OpenMeteoWeatherProvider` transforman formatos externos a contratos internos.
-   - **Dependency Injection Manual**: `PlanningService` recibe sus dependencias por constructor.
-   - **Application Service**: `PlanningService` coordina la lógica de negocio sin depender de frameworks web.
-4. **Principios SOLID**:
-   - **SRP**: Módulos con responsabilidad única (Rutas, Servicios, Adaptadores, Dominio).
-   - **OCP**: Reglas de negocio extensibles centralizadas en `ACTIVITY_RULES`.
-   - **LSP**: Implementación sustituible de los puertos de infraestructura.
-   - **ISP**: Interfaces pequeñas y enfocadas.
-   - **DIP**: Alto nivel depende de abstracciones y no de implementaciones concretas de Open-Meteo.
-5. **Estrategia de Autenticación y Gestión de Secretos**:
-   - Explicación de por qué la integración actual no requiere autenticación.
-   - Estrategia clara para proveedores futuros que requieran API Key, Bearer Token o OAuth 2.0 (gestión exclusiva en variables de entorno en backend, jamás expuestas al frontend).
-6. **Reglas de Negocio y Disclaimer**:
-   - Tabla de umbrales para niveles `FAVORABLE`, `REGULAR` y `UNFAVORABLE`.
-   - Disclaimer explícito: Recomendaciones orientativas, no oficiales ni médicas.
-7. **Guía de Reproducibilidad e Instalación**: Instrucciones paso a paso para ejecutar el backend, el frontend, consultar Swagger (`/docs`) y ejecutar la suite de 68 tests.
+## DevOps y Supabase
 
----
+La configuración versionada muestra GitHub Actions con Python 3.12, instalación
+bloqueada por `uv.lock` y job `pytest` en pull requests a `main` y pushes a
+`main`. El flujo esperado es rama de funcionalidad, PR, `pytest`, Vercel
+Preview y merge a Production. Supabase no aplica: el MVP no gestiona usuarios
+ni persistencia.
 
-## 3. Matriz de Cobertura de Requisitos
+## Checklist de requisitos y evidencia
 
-| Requisito | Estado | Evidencia |
+| Requisito | Evidencia versionada | Validación pendiente en PR/entorno |
 |---|---|---|
-| Búsqueda de ubicación | Cumplido | Endpoint `/locations` y UI interactiva |
-| Consulta de clima | Cumplido | Endpoint `/weather` y mapeo interno |
-| Evaluación de actividad | Cumplido | Endpoint `/recommendation` |
-| Cobertura de Tests | Cumplido | 68 pruebas unitarias e de integración |
-| Documentación OpenAPI | Cumplido | Disponible en `/docs` vía FastAPI |
-| Manejo de Errores | Cumplido | Excepciones personalizadas y respuestas HTTP 400/422/502/503 |
-| Ausencia de Secretos | Cumplido | Verificado en auditoría de código |
+| Vercel / Production | `src/app.py` y `[tool.vercel]` en `pyproject.toml` | Abrir Preview y Production pública |
+| API externa | Adaptadores Open-Meteo y pruebas con `MockTransport` | Flujo real desde Preview |
+| GitHub / CI | `.github/workflows/tests.yml` | Check `pytest` verde del PR |
+| README | `README.md` con producto, DevOps, SecOps y rollback | Revisión del equipo |
+| Variables | `.env.example`, `config.py`, `.gitignore` | Confirmar variables de Vercel sin valores sensibles |
+| DevOps | `CONTRIBUTING.md`, workflow y lockfile | PR y Preview revisados |
+| SecOps | Middleware, pruebas de headers y manejo de errores | Verificar headers en Preview |
+| Supabase no aplicable | README y este reporte | No requiere configuración externa |
 
----
+## Verificación local requerida
 
-## 4. Estructura para la Presentación Oral y Evaluación
+```bash
+uv sync --locked --all-extras
+uv run python -m pytest
+```
 
-1. **Introducción y Demostración**: Presentar el problema, la propuesta de valor y hacer una demostración en vivo de la aplicación web.
-2. **Explicación Técnica**: Mostrar la respuesta JSON estructurada y la arquitectura modular en Python / FastAPI.
-3. **Justificación de Arquitectura**: Destacar la aplicación de SOLID, el desacoplamiento mediante Puertos y Adaptadores, y la reusabilidad del servicio de recomendación.
+También se debe comprobar `/`, `/css/styles.css`, `/js/app.js`, `/docs`,
+`/openapi.json`, una ruta inexistente y una solicitud inválida antes del merge.

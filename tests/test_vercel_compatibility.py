@@ -66,3 +66,35 @@ def test_health_remains_available_from_vercel_app(client: TestClient) -> None:
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+@pytest.mark.parametrize(
+    "path", ["/", "/css/styles.css", "/js/app.js", "/docs", "/openapi.json"]
+)
+def test_security_headers_are_sent_without_breaking_public_resources(
+    client: TestClient, path: str
+) -> None:
+    response = client.get(path)
+
+    assert response.status_code == 200
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["referrer-policy"] == "strict-origin-when-cross-origin"
+    assert response.headers["permissions-policy"] == (
+        "camera=(), geolocation=(), microphone=()"
+    )
+
+
+def test_not_found_response_does_not_expose_internal_details(client: TestClient) -> None:
+    response = client.get("/route-that-does-not-exist")
+
+    assert response.status_code == 404
+    assert "traceback" not in response.text.lower()
+    assert "src\\" not in response.text.lower()
+
+
+def test_validation_error_keeps_security_headers(client: TestClient) -> None:
+    response = client.get("/locations", params={"query": "x"})
+
+    assert response.status_code == 422
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["referrer-policy"] == "strict-origin-when-cross-origin"
